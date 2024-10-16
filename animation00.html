@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bewegende Kreise mit realistischen Reibungsverlusten</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #2E2E2E;
+        }
+        #container {
+            position: relative;
+            width: 1500px;
+            height: 700px;
+            background-color: #006400; /* Billardtischfarbe */
+            border: 5px solid #8B4513; /* Tischumrandung in Holzoptik */
+        }
+        .circle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white; /* Farbe der Kugeln */
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script>
+        const container = document.getElementById('container');
+        const circleCount = 100; // Anzahl der Kreise
+        const radius = 0.1; // Kugelradius
+        const circles = [];
+        const friction = 1; // Reibungsverlust bei jeder Bewegung
+        const restitution = 1; // Verlust bei Kollisionen
+
+        function createCircles() {
+            for (let i = 0; i < circleCount; i++) {
+                const circle = document.createElement('div');
+                circle.classList.add('circle');
+                circle.style.left = Math.random() * (container.clientWidth - 20) + 'px';
+                circle.style.top = Math.random() * (container.clientHeight - 20) + 'px';
+                container.appendChild(circle);
+                circles.push({
+                    element: circle,
+                    x: parseFloat(circle.style.left),
+                    y: parseFloat(circle.style.top),
+                    xSpeed: (Math.random() - 0.5)*5 ,
+                    ySpeed: (Math.random() - 0.5)*5 ,
+                    mass: 1 // Kugeln haben gleiche Masse
+                });
+            }
+        }
+
+        function moveCircles() {
+            for (let i = 0; i < circles.length; i++) {
+                const circleA = circles[i];
+
+                // Position und Geschwindigkeit aktualisieren
+                circleA.x += circleA.xSpeed;
+                circleA.y += circleA.ySpeed;
+
+                // Kollisionserkennung mit den Rändern
+                if (circleA.x <= 0 || circleA.x + 20 >= container.clientWidth) {
+                    circleA.xSpeed *= -restitution; // Energieverlust bei Wandkollision
+                    circleA.x = Math.max(0, Math.min(circleA.x, container.clientWidth - 20));
+                }
+                if (circleA.y <= 0 || circleA.y + 20 >= container.clientHeight) {
+                    circleA.ySpeed *= -restitution; // Energieverlust bei Wandkollision
+                    circleA.y = Math.max(0, Math.min(circleA.y, container.clientHeight - 20));
+                }
+
+                // Kugel-Kugel-Kollisionserkennung
+                for (let j = i + 1; j < circles.length; j++) {
+                    const circleB = circles[j];
+                    const dx = circleB.x - circleA.x;
+                    const dy = circleB.y - circleA.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 2 * radius) {
+                        // Verhindere Überlappung der Kreise
+                        const overlap = 2 * radius - distance;
+                        const normalX = dx / distance;
+                        const normalY = dy / distance;
+
+                        // Verschiebe die Kugeln auseinander
+                        circleA.x -= normalX * overlap / 2;
+                        circleA.y -= normalY * overlap / 2;
+                        circleB.x += normalX * overlap / 2;
+                        circleB.y += normalY * overlap / 2;
+
+                        // Elastischer Stoß zwischen zwei Kugeln
+                        const relativeVelocityX = circleB.xSpeed - circleA.xSpeed;
+                        const relativeVelocityY = circleB.ySpeed - circleA.ySpeed;
+                        const velocityAlongNormal = relativeVelocityX * normalX + relativeVelocityY * normalY;
+
+                        if (velocityAlongNormal > 0) continue;
+
+                        const impulse = (2 * velocityAlongNormal) / (circleA.mass + circleB.mass);
+
+                        // Geschwindigkeit nach dem Stoß aktualisieren
+                        const collisionFriction = 0.5;
+                        circleA.xSpeed -= impulse * circleB.mass * normalX * collisionFriction;
+                        circleA.ySpeed -= impulse * circleB.mass * normalY * collisionFriction;
+
+                        circleB.xSpeed += impulse * circleA.mass * normalX * collisionFriction;
+                        circleB.ySpeed += impulse * circleA.mass * normalY * collisionFriction;
+                    }
+                }
+
+                // Reibungsverluste bei der Bewegung
+                circleA.xSpeed *= friction;
+                circleA.ySpeed *= friction;
+
+                // Position aktualisieren
+                circleA.element.style.left = `${circleA.x}px`;
+                circleA.element.style.top = `${circleA.y}px`;
+            }
+
+            requestAnimationFrame(moveCircles);
+        }
+
+        createCircles();
+        moveCircles();
+    </script>
+</body>
+</html>

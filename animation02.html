@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bewegende Kreise mit JavaScript</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #2E2E2E;
+        }
+        #container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            overflow: hidden;
+            background-color: #006400; /* Billardtischfarbe */
+            border: 5px solid #8B4513; /* Tischumrandung in Holzoptik */
+        }
+        .circle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white; /* Farbe der Kugeln */
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    <script>
+        const container = document.getElementById('container');
+        const circleCount = 26; // Anzahl der Kreise
+        const circles = [];
+
+        // Funktion zum Erstellen der Kreise
+        function createCircles() {
+            for (let i = 0; i < circleCount; i++) {
+                const circle = document.createElement('div');
+                circle.classList.add('circle');
+                // Zufällige Startposition
+                circle.style.left = Math.random() * (container.clientWidth - 20) + 'px';
+                circle.style.top = Math.random() * (container.clientHeight - 20) + 'px';
+                container.appendChild(circle);
+                circles.push({
+                    element: circle,
+                    xSpeed: (Math.random() - 0.5) * 4,
+                    ySpeed: (Math.random() - 0.5) * 4
+                });
+            }
+        }
+
+        // Funktion zur Bewegung der Kreise
+        function moveCircles() {
+            circles.forEach(circle => {
+                const rect = circle.element.getBoundingClientRect();
+                let newX = rect.left + circle.xSpeed - container.getBoundingClientRect().left;
+                let newY = rect.top + circle.ySpeed - container.getBoundingClientRect().top;
+
+                // Kollisionserkennung mit den Rändern
+                if (newX <= 0 || newX + rect.width >= container.clientWidth) {
+                    circle.xSpeed *= -1;
+                    newX = Math.max(0, Math.min(newX, container.clientWidth - rect.width));
+                }
+                if (newY <= 0 || newY + rect.height >= container.clientHeight) {
+                    circle.ySpeed *= -1;
+                    newY = Math.max(0, Math.min(newY, container.clientHeight - rect.height));
+                }
+
+                circle.element.style.left = newX + 'px';
+                circle.element.style.top = newY + 'px';
+            });
+            requestAnimationFrame(moveCircles);
+        }
+
+        createCircles(); // Kreise erstellen
+        moveCircles();   // Kreise bewegen
+    </script>
+</body>
+</html>
